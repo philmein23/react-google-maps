@@ -50,6 +50,15 @@ input {
   margin: 0 auto;
 }
 
+li {
+  line-height: 1.8;
+  list-style-type: none;
+}
+
+li>a {
+  text-decoration: none;
+}
+
 #root {
   height: 50vh;
 }

@@ -54,10 +54,10 @@ class Map extends Component {
     });
   };
 
-  initMap = () => {
+  initMap = ({ lat = -35, lng = 150 } = {}) => {
     let map = new google.maps.Map(document.getElementById('map'), {
-      center: { lat: -34.397, lng: 150.644 },
-      zoom: 8
+      center: { lat, lng },
+      zoom: 10
     });
 
     this.placesService = new google.maps.places.PlacesService(map);
@@ -85,6 +85,12 @@ class Map extends Component {
     });
   };
 
+  gotoLocatonOnMap = place => {
+    const { lat, lng } = place.geometry.location;
+
+    this.initMap({ lat: lat(), lng: lng() });
+  };
+
   findDetails = options => {
     return new Promise((resolve, reject) => {
       this.placesService.findPlaceFromQuery(options, (results, status) => {
@@ -104,8 +110,13 @@ class Map extends Component {
           this.state.results.map(place => (
             <ul>
               <li>
-                {place.name} //
-                {place.geometry.location.lat()} {place.geometry.location.lng()}
+                <a
+                  href="javascript:;"
+                  onClick={() => this.gotoLocatonOnMap(place)}
+                >
+                  {place.name}
+                </a>
+                {place.formatted_address}
               </li>
             </ul>
           ))}
