@@ -31,6 +31,8 @@ class Map extends Component {
   };
 
   placesService = null;
+  map = null;
+  markers = [];
 
   async componentDidMount() {
     this.setState(() => ({
@@ -55,12 +57,31 @@ class Map extends Component {
   };
 
   initMap = ({ lat = -35, lng = 150 } = {}) => {
-    let map = new google.maps.Map(document.getElementById('map'), {
+    this.map = new google.maps.Map(document.getElementById('map'), {
       center: { lat, lng },
       zoom: 10
     });
 
+    this.initPlaceService(this.map);
+  };
+
+  initPlaceService = map => {
     this.placesService = new google.maps.places.PlacesService(map);
+  };
+
+  addMarker = (map, { lat, lng }) => {
+    let marker = new google.maps.Marker({
+      position: { lat, lng },
+      map: map
+    });
+
+    this.markers.push(marker);
+  };
+
+  setAllMarkers = () => {
+    if (this.markers.length) {
+      this.markers.forEach(marker => marker.setMap(this.map));
+    }
   };
 
   search = async e => {
@@ -69,6 +90,14 @@ class Map extends Component {
     const results = await this.searchLocations({ query: this.state.query });
 
     this.setState({ results });
+
+    results.forEach(place => {
+      const { lat, lng } = place.geometry.location;
+
+      this.initMap({ lat: lat(), lng: lng() });
+      this.addMarker(this.map, { lat: lat(), lng: lng() });
+      this.setAllMarkers();
+    });
 
     console.log(results);
   };
