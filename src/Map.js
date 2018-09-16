@@ -27,12 +27,14 @@ class Map extends Component {
   state = {
     query: '',
     loading: false,
-    results: []
+    results: [],
+    isDisplayingDetails: false
   };
 
   placesService = null;
   map = null;
   markers = [];
+  infoWindows = [];
 
   async componentDidMount() {
     this.setState(() => ({
@@ -48,6 +50,12 @@ class Map extends Component {
       this.initMap();
     });
   }
+
+  toggleDialog = () => {
+    this.setState({
+      isDisplayingDetails: !this.state.isDisplayingDetails
+    });
+  };
 
   onHandleQueryChange = e => {
     let { value } = e.target;
@@ -78,14 +86,50 @@ class Map extends Component {
     this.markers.push(marker);
   };
 
-  setAllMarkers = () => {
+  setAllMarkers = place => {
+    let infoWindowAtPlace = null;
+
     if (this.markers.length) {
-      this.markers.forEach(marker => marker.setMap(this.map));
+      this.markers.forEach(marker => {
+        marker.setMap(this.map);
+
+        infoWindowAtPlace = this.setInfoWindow(marker);
+      });
+
+      infoWindowAtPlace(place);
     }
+  };
+
+  setInfoWindow = marker => place => {
+    let infoWindow = new google.maps.InfoWindow({
+      content: this.renderInfoWindowContent(place)
+    });
+
+    marker.infoWindow = infoWindow;
+
+    marker.addListener('click', e => {
+      marker.infoWindow.open(this.map, marker);
+    });
+  };
+
+  hideAllInfoWindows = () => {
+    this.markers;
+  };
+
+  renderInfoWindowContent = place => {
+    return `<div>
+        <a onClick={this.toggleDialog}>
+        ${place.name}
+        </a>
+        <div>
+        ${place.formatted_address}
+        </div>
+      </div>`;
   };
 
   search = async e => {
     e.preventDefault();
+    this.clearMarkers();
 
     const results = await this.searchLocations({ query: this.state.query });
 
@@ -96,7 +140,7 @@ class Map extends Component {
 
       this.initMap({ lat: lat(), lng: lng() });
       this.addMarker(this.map, { lat: lat(), lng: lng() });
-      this.setAllMarkers();
+      this.setAllMarkers(place);
     });
 
     console.log(results);
@@ -116,8 +160,15 @@ class Map extends Component {
 
   gotoLocatonOnMap = place => {
     const { lat, lng } = place.geometry.location;
+    this.clearMarkers();
 
     this.initMap({ lat: lat(), lng: lng() });
+    this.addMarker(this.map, { lat: lat(), lng: lng() });
+    this.setAllMarkers(place);
+  };
+
+  clearMarkers = () => {
+    this.markers = [];
   };
 
   findDetails = options => {
@@ -146,6 +197,7 @@ class Map extends Component {
                   {place.name}
                 </a>
                 {place.formatted_address}
+                <button onClick={() => this.toggleDialog()}>Toggle</button>
               </li>
             </ul>
           ))}
@@ -155,24 +207,26 @@ class Map extends Component {
 
   render() {
     return (
-      <div className="container">
-        {this.state.loading ? (
-          <div>Loading...</div>
-        ) : (
-          <Fragment>
-            <input
-              type="text"
-              placeholder="Search Places..."
-              onChange={this.onHandleQueryChange}
-            />
-            <button className="search" onClick={this.search}>
-              Search
-            </button>
-            <div id="map" />
-            {this.renderLocations()}
-          </Fragment>
-        )}
-      </div>
+      <Fragment>
+        <div className="container">
+          {this.state.loading ? (
+            <div>Loading...</div>
+          ) : (
+            <Fragment>
+              <input
+                type="text"
+                placeholder="Search Places..."
+                onChange={this.onHandleQueryChange}
+              />
+              <button className="search" onClick={this.search}>
+                Search
+              </button>
+              <div id="map" />
+              {this.renderLocations()}
+            </Fragment>
+          )}
+        </div>
+      </Fragment>
     );
   }
 }
